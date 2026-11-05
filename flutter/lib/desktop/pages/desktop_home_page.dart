@@ -190,7 +190,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     final grande = bind.isIncomingOnly(); // Suporte GVSI (aluno): ID grande, fácil de ditar
     return Container(
       margin: const EdgeInsets.only(left: 20, right: 11),
-      height: grande ? 76 : 57,
+      height: grande ? 90 : 57,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
