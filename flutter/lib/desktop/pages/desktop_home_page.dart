@@ -129,7 +129,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     return ChangeNotifierProvider.value(
       value: gFFI.serverModel,
       child: Container(
-        width: isIncomingOnly ? 280.0 : 200.0,
+        width: isIncomingOnly ? 320.0 : 200.0,
         color: Theme.of(context).colorScheme.background,
         child: Stack(
           children: [
@@ -187,9 +187,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
 
   buildIDBoard(BuildContext context) {
     final model = gFFI.serverModel;
+    final grande = bind.isIncomingOnly(); // Suporte GVSI (aluno): ID grande, fácil de ditar
     return Container(
       margin: const EdgeInsets.only(left: 20, right: 11),
-      height: 57,
+      height: grande ? 76 : 57,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
@@ -239,7 +240,9 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                           contentPadding: EdgeInsets.only(top: 10, bottom: 10),
                         ),
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: grande ? 34 : 22,
+                          fontWeight: grande ? FontWeight.w700 : null,
+                          letterSpacing: grande ? 1.5 : null,
                         ),
                       ).workaroundFreezeLinuxMint(),
                     ),
@@ -294,6 +297,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     final textColor = Theme.of(context).textTheme.titleLarge?.color;
     final showOneTime = model.approveMode != 'click' &&
         model.verificationMethod != kUsePermanentPassword;
+    final grande = bind.isIncomingOnly(); // Suporte GVSI (aluno): senha grande
     return Container(
       margin: EdgeInsets.only(left: 20.0, right: 16, top: 13, bottom: 13),
       child: Row(
@@ -302,7 +306,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         children: [
           Container(
             width: 2,
-            height: 52,
+            height: grande ? 70 : 52,
             decoration: BoxDecoration(color: MyTheme.accent),
           ),
           Expanded(
@@ -336,7 +340,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                               contentPadding:
                                   EdgeInsets.only(top: 14, bottom: 10),
                             ),
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(
+                                fontSize: grande ? 30 : 15,
+                                fontWeight: grande ? FontWeight.w700 : null,
+                                letterSpacing: grande ? 2 : null),
                           ).workaroundFreezeLinuxMint(),
                         ),
                       ),

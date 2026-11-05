@@ -3,7 +3,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
     [
         ("Status", "Status"),
         ("Your Desktop", "Seu Computador"),
-        ("desk_tip", "Seu computador pode ser acessado com este ID e senha."),
+        ("desk_tip", "Envie o ID e a senha abaixo para o suporte da GVSI. Só quem tiver os dois consegue acessar."),
         ("Password", "Senha"),
         ("Ready", "Pronto"),
         ("Established", "Estabelecido"),

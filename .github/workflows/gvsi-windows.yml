@@ -1,10 +1,5 @@
 # Gerado a partir de flutter-build.yml (RustDesk 1.5.1): só Windows x64, com a marca GVSI.
 name: Suporte GVSI - Windows
-on:
-  workflow_dispatch: {}
-  push:
-    branches:
-    - gvsi
 env:
   SCITER_RUST_VERSION: '1.75'
   RUST_VERSION: '1.75'
@@ -47,7 +42,7 @@ jobs:
       platform: ${{ matrix.job.platform }}
       target_version: Windows10
   build-for-windows-flutter:
-    name: ${{ matrix.job.target }}
+    name: ${{ matrix.job.target }} (${{ matrix.job.modo }})
     needs:
     - build-RustDeskTempTopMostWindow
     - generate-bridge
@@ -62,6 +57,16 @@ jobs:
           flutter-arch: x64
           vcpkg-triplet: x64-windows-static
           build-args: --vram
+          modo: aluno
+          exe: Suporte-GVSI.exe
+        - target: x86_64-pc-windows-msvc
+          os: windows-2022
+          arch: x86_64
+          flutter-arch: x64
+          vcpkg-triplet: x64-windows-static
+          build-args: --vram
+          modo: suporte
+          exe: Suporte-GVSI-Equipe.exe
     steps:
     - name: Export GitHub Actions cache environment variables
       uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410
@@ -158,7 +163,7 @@ jobs:
       if: env.UPLOAD_ARTIFACT == 'true'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
+        name: rustdesk-unsigned-windows-${{ matrix.job.arch }}-${{ matrix.job.modo }}
         path: rustdesk
     - name: Build self-extracted executable
       shell: bash
@@ -178,12 +183,19 @@ jobs:
         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
 
         '
-    - name: 'Nome final: Suporte-GVSI.exe'
+    - name: Nome final do programa
       shell: bash
-      run: mv ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe ./SignOutput/Suporte-GVSI.exe && ls -la ./SignOutput
+      run: mv ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe "./SignOutput/${{ matrix.job.exe }}" && ls -la ./SignOutput
     - name: Guardar o programa
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: suporte-gvsi-windows-x64
-        path: ./SignOutput/Suporte-GVSI.exe
+        name: suporte-gvsi-${{ matrix.job.modo }}
+        path: ./SignOutput/${{ matrix.job.exe }}
         retention-days: 30
+    env:
+      GVSI_MODO: ${{ matrix.job.modo }}
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+    - gvsi

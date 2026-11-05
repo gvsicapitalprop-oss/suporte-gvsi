@@ -2867,8 +2867,12 @@ fn is_option_can_save(
 }
 
 #[inline]
+/// Suporte GVSI: a mesma base gera dois programas. "aluno" só recebe conexão (mostra ID e senha);
+/// "suporte" só conecta (a equipe). Vem da variável GVSI_MODO na hora de compilar.
+const GVSI_MODO: Option<&str> = option_env!("GVSI_MODO");
+
 pub fn is_incoming_only() -> bool {
-    HARD_SETTINGS
+    GVSI_MODO == Some("aluno") || HARD_SETTINGS
         .read()
         .unwrap()
         .get("conn-type")
@@ -2877,7 +2881,7 @@ pub fn is_incoming_only() -> bool {
 
 #[inline]
 pub fn is_outgoing_only() -> bool {
-    HARD_SETTINGS
+    GVSI_MODO == Some("suporte") || HARD_SETTINGS
         .read()
         .unwrap()
         .get("conn-type")
