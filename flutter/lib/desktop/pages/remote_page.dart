@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:desktop_drop/desktop_drop.dart';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
@@ -708,6 +710,25 @@ class _RemotePageState extends State<RemotePage>
         ),
       );
 
+  /// Suporte GVSI: arquivos arrastados do computador para a tela remota. A conexao de tela
+  /// nao transfere arquivos; abre a de transferencia (com o token desta, sem pedir senha) e
+  /// deixa os caminhos na fila. Ela envia para a Area de Trabalho assim que conectar.
+  Future<void> _gvsiSoltarArquivos(DropDoneDetails detalhes) async {
+    final caminhos = detalhes.files
+        .map((f) => f.path)
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (caminhos.isEmpty) return;
+    await bind.mainSetLocalOption(
+        key: '$kGvsiEnvioPrefix${widget.id}', value: jsonEncode(caminhos));
+    final connToken = bind.sessionGetConnToken(sessionId: _ffi.sessionId);
+    showToast(caminhos.length == 1
+        ? 'Enviando 1 arquivo para a Área de Trabalho...'
+        : 'Enviando ${caminhos.length} arquivos para a Área de Trabalho...');
+    if (!mounted) return;
+    connect(context, widget.id, isFileTransfer: true, connToken: connToken);
+  }
+
   Widget buildBody(BuildContext context) {
     remoteToolbar(BuildContext context) => RemoteToolbar(
           id: widget.id,
@@ -756,7 +777,11 @@ class _RemotePageState extends State<RemotePage>
                     }
                   },
                   inputModel: _ffi.inputModel,
-                  child: getBodyForDesktop(context))),
+                  child: isWeb
+                      ? getBodyForDesktop(context)
+                      : DropTarget(
+                          onDragDone: _gvsiSoltarArquivos,
+                          child: getBodyForDesktop(context)))),
           Stack(
             children: [
               _ffi.ffiModel.pi.isSet.isTrue &&

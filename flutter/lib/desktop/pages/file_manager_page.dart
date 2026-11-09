@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -118,10 +119,68 @@ class _FileManagerPageState extends State<FileManagerPage>
       widget.tabController?.onSelected?.call(widget.id);
     });
     WidgetsBinding.instance.addObserver(this);
+    if (!isWeb) {
+      _gvsiFilaTimer = Timer.periodic(
+          const Duration(seconds: 1), (_) => _gvsiEnviarFila());
+    }
+  }
+
+  // Suporte GVSI: fila de arquivos soltos na tela remota (ver kGvsiEnvioPrefix)
+  Timer? _gvsiFilaTimer;
+  bool _gvsiEnviandoFila = false;
+
+  Future<void> _gvsiEnviarFila() async {
+    if (_gvsiEnviandoFila || !mounted) return;
+    final chave = '$kGvsiEnvioPrefix${widget.id}';
+    final bruto = bind.mainGetLocalOption(key: chave);
+    if (bruto.isEmpty) return;
+    final remoto = model.remoteController;
+    if (remoto.homePath.isEmpty) return; // ainda conectando
+    _gvsiEnviandoFila = true;
+    try {
+      await bind.mainSetLocalOption(key: chave, value: '');
+      final caminhos =
+          (jsonDecode(bruto) as List).map((e) => e.toString()).toList();
+      final win = remoto.options.value.isWindows;
+      final casa = remoto.homePath;
+      final desktop = PathUtil.join(casa, 'Desktop', win);
+      if (!await remoto.openDirectory(desktop)) {
+        if (!await remoto.openDirectory(
+            PathUtil.join(PathUtil.join(casa, 'OneDrive', win), 'Desktop', win))) {
+          await remoto.openDirectory(casa);
+        }
+      }
+      await _gvsiEnviarLocais(caminhos);
+    } catch (e) {
+      debugPrint('gvsi fila de envio: $e');
+    } finally {
+      _gvsiEnviandoFila = false;
+    }
+  }
+
+  /// Envia arquivos/pastas deste computador para a pasta aberta no lado remoto.
+  Future<void> _gvsiEnviarLocais(List<String> caminhos) async {
+    final itens = SelectedItems(isLocal: true);
+    for (final caminho in caminhos) {
+      final ehPasta = FileSystemEntity.isDirectorySync(caminho);
+      if (!ehPasta && !File(caminho).existsSync()) continue;
+      final partes =
+          caminho.split(RegExp(r'[\\/]')).where((p) => p.isNotEmpty).toList();
+      if (partes.isEmpty) continue;
+      itens.add(Entry()
+        ..path = caminho
+        ..name = partes.last
+        ..entryType = ehPasta ? 0 : 4
+        ..size = ehPasta ? 0 : File(caminho).lengthSync());
+    }
+    if (itens.items.isEmpty) return;
+    await model.localController
+        .sendFiles(itens, model.remoteController.directoryData());
   }
 
   @override
   void dispose() {
+    _gvsiFilaTimer?.cancel();
     model.close().whenComplete(() {
       _ffi.close();
       _ffi.dialogManager.dismissAll();
@@ -404,16 +463,8 @@ class _FileManagerPageState extends State<FileManagerPage>
       // ignore local
       return;
     }
-    final items = SelectedItems(isLocal: false);
-    for (var file in details.files) {
-      final f = File(file.path);
-      items.add(Entry()
-        ..path = file.path
-        ..name = file.name
-        ..size = FileSystemEntity.isDirectorySync(f.path) ? 0 : f.lengthSync());
-    }
-    final otherSideData = model.localController.directoryData();
-    model.remoteController.sendFiles(items, otherSideData);
+    // Suporte GVSI: soltar no lado remoto = enviar deste computador para a pasta aberta la
+    _gvsiEnviarLocais(details.files.map((f) => f.path).toList());
   }
 }
 

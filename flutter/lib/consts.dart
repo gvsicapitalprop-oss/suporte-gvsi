@@ -63,6 +63,10 @@ const String kWindowActionRebuild = "rebuild";
 const String kWindowEventHide = "hide";
 const String kWindowEventShow = "show";
 const String kWindowConnect = "connect";
+
+/// Suporte GVSI: arquivos soltos na tela remota ficam nesta opcao local (por ID) ate a
+/// janela de transferencia daquele ID conectar e envia-los para a Area de Trabalho.
+const String kGvsiEnvioPrefix = "gvsi-envio-";
 const String kWindowBumpMouse = "bump_mouse";
 
 const String kWindowEventNewRemoteDesktop = "new_remote_desktop";
